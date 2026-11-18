@@ -42,9 +42,7 @@
   },
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
-  "bin": {
-    "wbails-v2": "lib/Cli/index.js"
-  },
+  "bin": "lib/Cli/index.js",
   "exports": {
     ".": {
       "types": "./lib/index.d.ts",
