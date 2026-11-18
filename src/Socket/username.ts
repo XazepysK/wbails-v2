@@ -108,8 +108,7 @@ export const makeUsernameSocket = <T extends UsernameSocket>(sock: T) => {
 		return setUsername(username, { sessionId: checked.session_id })
 	}
 
-	const deleteUsername = async () =>
-		runUsernameQuery({ username: null } as { username: null }, QueryIds.USERNAME_SET, 'xwa2_username_delete')
+	const deleteUsername = async () => runUsernameQuery({ username: null }, QueryIds.USERNAME_SET, 'xwa2_username_delete')
 
 	const getMyUsername = async (): Promise<string | null> => {
 		const result = await runUsernameQuery<any>({}, QueryIds.USERNAME_GET, XWAPaths.xwa2_username_get)

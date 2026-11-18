@@ -1404,14 +1404,14 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 						attrs: {
 							polltype: 'creation'
 						}
-					} as BinaryNode)
+					})
 				} else if (isEventMsg) {
 					additionalNodes.push({
 						tag: 'meta',
 						attrs: {
 							event_type: 'creation'
 						}
-					} as BinaryNode)
+					})
 				}
 
 				await relayMessage(jid, fullMsg.message!, {
@@ -1430,12 +1430,31 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 				return fullMsg
 			}
 		},
-		sendFakeMessage: async (jid: string, content: AnyMessageContent, opts: { pn: string; lid: string, pushName: string }) => {
+		sendFakeMessage: async (
+			jid: string,
+			content: AnyMessageContent,
+			opts: { pn: string; lid: string; pushName: string }
+		) => {
 			const meId = authState.creds.me!.id
 			const messageId = generateMessageIDV2(opts.pn)
 			const messageTimestamp = Math.floor(Date.now() / 1000)
-			const msgs = await generateWAMessage(jid, content, { logger, userJid: meId, upload: waUploadToServer, mediaCache: config.mediaCache, options: config.options, messageId })
-			msgs.key = { ...msgs.key, remoteJid: jid, fromMe: false, id: messageId, participant: opts.pn, participantAlt: opts.lid, addressingMode: 'lid' }
+			const msgs = await generateWAMessage(jid, content, {
+				logger,
+				userJid: meId,
+				upload: waUploadToServer,
+				mediaCache: config.mediaCache,
+				options: config.options,
+				messageId
+			})
+			msgs.key = {
+				...msgs.key,
+				remoteJid: jid,
+				fromMe: false,
+				id: messageId,
+				participant: opts.pn,
+				participantAlt: opts.lid,
+				addressingMode: 'lid'
+			}
 			msgs.messageTimestamp = messageTimestamp
 			msgs.pushName = opts.pushName || opts.pn.split('@')[0]
 			msgs.broadcast = false
@@ -1446,33 +1465,44 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		sendMessageMembers: async (groupJid: string, content: proto.IMessage, opts: any) => {
 			const { participants } = await groupMetadata(groupJid)
 			const meId = authState.creds.me!.id.split(':')[0] + '@s.whatsapp.net'
-			const members = participants.filter((x) => !x.admin && (x?.id || x?.lid) !== meId)
+			const members = participants.filter(x => !x.admin && (x?.id || x?.lid) !== meId)
 			let result
 			try {
 				if (opts.onlyMember) {
-					result = Promise.allSettled(members.map(async (x, i) => {
-						const ids = x?.id || x?.lid as string
-						await relayMessage(ids, content, opts)
-						await new Promise((r) => setTimeout(r, i * 2000))
-					}))
+					result = Promise.allSettled(
+						members.map(async (x, i) => {
+							const ids = x?.id || (x?.lid as string)
+							await relayMessage(ids, content, opts)
+							await new Promise(r => setTimeout(r, i * 2000))
+						})
+					)
 				} else {
-					result = Promise.allSettled(participants.filter((nga) => (nga?.id || nga?.lid) !== meId).map(async (x, i) => {
-						const ids = x?.id || x?.lid as string
-						await relayMessage(ids, content, opts)
-						await new Promise((r) => setTimeout(r, i * 2000))
-					}))
+					result = Promise.allSettled(
+						participants
+							.filter(nga => (nga?.id || nga?.lid) !== meId)
+							.map(async (x, i) => {
+								const ids = x?.id || (x?.lid as string)
+								await relayMessage(ids, content, opts)
+								await new Promise(r => setTimeout(r, i * 2000))
+							})
+					)
 				}
 			} catch (e: any) {
 				result = e
 			}
+
 			return result
 		},
-		sendRichMessage: async (jid: string, opts: { unifiedResponse?: any, submessages?: any[], contextInfo?: any, originalRecipientMetadata?: any }, relayOpts: any = {}) => {
+		sendRichMessage: async (
+			jid: string,
+			opts: { unifiedResponse?: any; submessages?: any[]; contextInfo?: any; originalRecipientMetadata?: any },
+			relayOpts: any = {}
+		) => {
 			const cUnefiedResponse = Buffer.from(JSON.stringify(opts.unifiedResponse)).toString('base64')
 			const cOriginalRecipientMetadata = Buffer.from(JSON.stringify(opts.originalRecipientMetadata)).toString('base64')
 			const msg = {
 				botForwardedMessage: {
-					 message: {
+					message: {
 						richResponseMessage: {
 							messageType: 1,
 							...(opts.submessages && { submessages: opts.submessages }),
@@ -1488,12 +1518,12 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 									forwardingScore: 1
 								}
 							},
-							...(opts.originalRecipientMetadata && { originalRecipientMetadata: cOriginalRecipientMetadata }),
+							...(opts.originalRecipientMetadata && { originalRecipientMetadata: cOriginalRecipientMetadata })
 						}
 					}
 				}
-			};
-			return relayMessage(jid, msg, relayOpts);
+			}
+			return relayMessage(jid, msg, relayOpts)
 		}
 	}
 }

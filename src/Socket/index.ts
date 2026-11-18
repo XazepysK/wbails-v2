@@ -1,12 +1,12 @@
 import { DEFAULT_CONNECTION_CONFIG } from '../Defaults'
 import type { UserFacingSocketConfig } from '../Types'
-import { makeCommunitiesSocket } from './communities'
-import { makeUsernameSocket } from './username'
-import { makeGraphQLSocket } from './graphql'
-import { makeRegistrationSocket } from './registration'
-import { makeManagedAccountSocket } from './managed-account'
-import { makeInteropSocket } from './interop'
 import { makeAIGroupsSocket } from './aigroups'
+import { makeCommunitiesSocket } from './communities'
+import { makeGraphQLSocket } from './graphql'
+import { makeInteropSocket } from './interop'
+import { makeManagedAccountSocket } from './managed-account'
+import { makeRegistrationSocket } from './registration'
+import { makeUsernameSocket } from './username'
 
 // export the last socket layer
 

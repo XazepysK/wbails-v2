@@ -3,16 +3,16 @@ import { type BinaryNode, getBinaryNodeChild } from '../WABinary'
 import { USyncBotProfileProtocol } from './Protocols/UsyncBotProfileProtocol'
 import { USyncLIDProtocol } from './Protocols/UsyncLIDProtocol'
 import {
+	USyncBusinessProtocol,
 	USyncContactProtocol,
 	USyncDeviceProtocol,
 	USyncDisappearingModeProtocol,
-	USyncStatusProtocol,
-	USyncUsernameProtocol,
-	USyncBusinessProtocol,
+	USyncFeatureProtocol,
 	USyncPictureProtocol,
-	USyncTextStatusProtocol,
 	USyncSidelistProtocol,
-	USyncFeatureProtocol
+	USyncStatusProtocol,
+	USyncTextStatusProtocol,
+	USyncUsernameProtocol
 } from './Protocols'
 import { USyncUser } from './USyncUser'
 

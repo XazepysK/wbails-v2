@@ -85,14 +85,7 @@ export type MessageWithContextInfo =
 export type DownloadableMessage = { mediaKey?: Uint8Array | null; directPath?: string | null; url?: string | null }
 
 export type MessageReceiptType =
-	| 'read'
-	| 'read-self'
-	| 'hist_sync'
-	| 'peer_msg'
-	| 'sender'
-	| 'inactive'
-	| 'played'
-	| undefined
+	'read' | 'read-self' | 'hist_sync' | 'peer_msg' | 'sender' | 'inactive' | 'played' | undefined
 
 export type MediaConnInfo = {
 	auth: string
@@ -256,14 +249,13 @@ export type InteractiveButtonsContent = {
 	footer?: proto.Message.InteractiveMessage.IFooter
 }
 
-export type AnyRegularMessageContent =
-	(
-		| InteractiveButtonsContent
-		| { buttonsMessage: proto.Message.IButtonsMessage }
-		| { templateMessage: proto.Message.ITemplateMessage }
-		| { listMessage: proto.Message.IListMessage }
-		| { stickerPackMessage: StickerPackMessageContent }
-		| ({
+export type AnyRegularMessageContent = (
+	| InteractiveButtonsContent
+	| { buttonsMessage: proto.Message.IButtonsMessage }
+	| { templateMessage: proto.Message.ITemplateMessage }
+	| { listMessage: proto.Message.IListMessage }
+	| { stickerPackMessage: StickerPackMessageContent }
+	| ({
 			text: string
 			linkPreview?: WAUrlInfo | null
 	  } & Mentionable &

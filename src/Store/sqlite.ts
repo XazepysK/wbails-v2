@@ -23,6 +23,7 @@ const getDatabaseSync = () => {
 			throw new Error('node:sqlite is not available in this Node.js version')
 		}
 	}
+
 	return cachedDatabaseSync
 }
 

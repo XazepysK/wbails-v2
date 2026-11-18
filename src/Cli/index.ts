@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 import { existsSync, readFileSync, statSync } from 'fs'
 import { cp, mkdir, readFile, writeFile } from 'fs/promises'
-import { createInterface } from 'readline/promises'
-import { stdin as input, stdout as output } from 'process'
 import { dirname, join, resolve } from 'path'
-import { fileURLToPath } from 'url'
+import { stdin as input, stdout as output } from 'process'
+import { createInterface } from 'readline/promises'
 import { setTimeout as sleep } from 'timers/promises'
+import { fileURLToPath } from 'url'
 
 type Provider = 'whatsapp' | 'telegram' | 'express'
 type ModuleType = 'esModule' | 'commonjs'
@@ -105,7 +105,9 @@ Examples:
 }
 
 const printProviders = () => {
-	console.log(`Available providers:\n  - whatsapp  (simple base, pairing/QR, sessions)\n  - telegram  (bot stub, API key/token auth; telegraf or grammy)\n  - express   (HTTP stub, x-api-key auth, /health, /message)`)
+	console.log(
+		`Available providers:\n  - whatsapp  (simple base, pairing/QR, sessions)\n  - telegram  (bot stub, API key/token auth; telegraf or grammy)\n  - express   (HTTP stub, x-api-key auth, /health, /message)`
+	)
 }
 
 const parseArgs = (argv: string[]) => {
@@ -117,6 +119,7 @@ const parseArgs = (argv: string[]) => {
 			positionals.push(...argv.slice(i + 1))
 			break
 		}
+
 		if (a === '-y' || a === '--yes') opts.yes = true
 		else if (a === '--ts' || a === '--typescript') opts.ts = true
 		else if (a === '--js') opts.js = true
@@ -138,6 +141,7 @@ const parseArgs = (argv: string[]) => {
 		else if (!a.startsWith('-')) positionals.push(a)
 		else opts.unknown = a
 	}
+
 	return { opts, positionals }
 }
 
@@ -178,7 +182,7 @@ const askChoice = async <T extends string>(
 	const answer = (await rl.question(`${question} ( default: ${def}, options: ${allowed.join('/')} ) `)).trim()
 	if (!answer) return def
 	const found = allowed.find(x => x.toLowerCase() === answer.toLowerCase())
-	return (found || def) as T
+	return found || def
 }
 
 const askYesNo = async (rl: ReturnType<typeof createInterface>, question: string, def = false) => {
@@ -201,16 +205,27 @@ const resolveAnswers = async (opts: Record<string, string | boolean>, positional
 		? (providerOpt as Provider)
 		: undefined
 	const modType: ModuleType | undefined =
-		typeOpt === 'cjs' || typeOpt === 'commonjs' ? 'commonjs' : typeOpt === 'esm' || typeOpt === 'esmodule' ? 'esModule' : undefined
+		typeOpt === 'cjs' || typeOpt === 'commonjs'
+			? 'commonjs'
+			: typeOpt === 'esm' || typeOpt === 'esmodule'
+				? 'esModule'
+				: undefined
 	const useTs = hasTsFlag ? true : hasJsFlag ? false : undefined
 	const authDir = typeof opts.authDir === 'string' && opts.authDir ? opts.authDir : undefined
 	const authMode: AuthMode | undefined = opts.qr ? 'qr' : opts.pairing ? 'pairing' : undefined
 	const tgLib = String(opts.telegramLib || '').toLowerCase()
-	const telegramLib: TelegramLib | undefined = tgLib === 'grammy' ? 'grammy' : tgLib === 'telegraf' ? 'telegraf' : undefined
+	const telegramLib: TelegramLib | undefined =
+		tgLib === 'grammy' ? 'grammy' : tgLib === 'telegraf' ? 'telegraf' : undefined
 
 	const nonInteractive =
 		yes ||
-		(!!projectName && !!provider && !!modType && useTs !== undefined && !!(authDir || DEFAULTS.authDir) && !!(authMode || DEFAULTS.authMode) && !!(telegramLib || DEFAULTS.telegramLib))
+		(!!projectName &&
+			!!provider &&
+			!!modType &&
+			useTs !== undefined &&
+			!!(authDir || DEFAULTS.authDir) &&
+			!!(authMode || DEFAULTS.authMode) &&
+			!!(telegramLib || DEFAULTS.telegramLib))
 
 	if (nonInteractive) {
 		return {
@@ -234,16 +249,20 @@ const resolveAnswers = async (opts: Record<string, string | boolean>, positional
 		const prov =
 			provider ||
 			(await askChoice(rl, 'platform provider', DEFAULTS.provider, ['whatsapp', 'telegram', 'express'] as const))
-		const mt =
-			modType || (await askChoice(rl, 'type', DEFAULTS.modType, ['esModule', 'commonjs'] as const))
+		const mt = modType || (await askChoice(rl, 'type', DEFAULTS.modType, ['esModule', 'commonjs'] as const))
 		const ts = useTs ?? (await askYesNo(rl, 'use typescript?', false))
-		const ad = authDir || (prov === 'whatsapp' ? await prompt(rl, 'auth/session dir', DEFAULTS.authDir) : DEFAULTS.authDir)
+		const ad =
+			authDir || (prov === 'whatsapp' ? await prompt(rl, 'auth/session dir', DEFAULTS.authDir) : DEFAULTS.authDir)
 		const am =
 			authMode ||
-			(prov === 'whatsapp' ? await askChoice(rl, 'auth mode', DEFAULTS.authMode, ['pairing', 'qr'] as const) : DEFAULTS.authMode)
+			(prov === 'whatsapp'
+				? await askChoice(rl, 'auth mode', DEFAULTS.authMode, ['pairing', 'qr'] as const)
+				: DEFAULTS.authMode)
 		const tl =
 			telegramLib ||
-			(prov === 'telegram' ? await askChoice(rl, 'telegram library', DEFAULTS.telegramLib, ['telegraf', 'grammy'] as const) : DEFAULTS.telegramLib)
+			(prov === 'telegram'
+				? await askChoice(rl, 'telegram library', DEFAULTS.telegramLib, ['telegraf', 'grammy'] as const)
+				: DEFAULTS.telegramLib)
 		return {
 			projectName: pn,
 			provider: prov,
@@ -272,7 +291,11 @@ const waIndexEsmJs = (authDir: string, authMode: AuthMode) => `import makeWASock
 } from '@xazepysk/wbails-v2'
 import { Boom } from '@hapi/boom'
 import pino from 'pino'
-import qrcode from 'qrcode-terminal'
+${
+	authMode === 'qr'
+	    ? "import qrcode from 'qrcode-terminal'"
+		: ""
+}
 import readline from 'readline'
 import handleCommand from './commands.js'
 
@@ -293,17 +316,25 @@ async function start() {
 		}
 	})
 
-${authMode === 'pairing' ? `	if (!state.creds.registered) {
+${
+	authMode === 'pairing'
+		? `	if (!state.creds.registered) {
 		const pn = await question('Enter your number without + or space\\n')
 		const code = await sock.requestPairingCode(pn.replace(/\\D/g, ''))
 		const formatted = code?.match(/.{1,4}/g)?.join('-') || code
 		console.log('Pairing code:', formatted)
 	}
-` : ''}	sock.ev.process(async events => {
+`
+		: ''
+}	sock.ev.process(async events => {
 		if (events['connection.update']) {
 			const { connection, lastDisconnect, qr } = events['connection.update']
-${authMode === 'qr' ? `			if (qr) qrcode.generate(qr, { small: true })
-` : ''}			if (connection === 'close') {
+${
+	authMode === 'qr'
+		? `			if (qr) qrcode.generate(qr, { small: true })
+`
+		: ''
+}			if (connection === 'close') {
 				const statusCode = (lastDisconnect?.error instanceof Boom ? lastDisconnect.error : undefined)?.output
 					?.statusCode
 				const shouldReconnect = statusCode !== DisconnectReason.loggedOut
@@ -354,7 +385,10 @@ const waCommandsEsmJs = `export default async function handleCommand(sock, m) {
 }
 `
 
-const waIndexCjsJs = (authDir: string, authMode: AuthMode) => `const makeWASocket = require('@xazepysk/wbails-v2').default
+const waIndexCjsJs = (
+	authDir: string,
+	authMode: AuthMode
+) => `const makeWASocket = require('@xazepysk/wbails-v2').default
 const {
 	DisconnectReason,
 	fetchLatestBaileysVersion,
@@ -363,7 +397,11 @@ const {
 } = require('@xazepysk/wbails-v2')
 const { Boom } = require('@hapi/boom')
 const pino = require('pino')
-const qrcode = require('qrcode-terminal')
+${
+	authMode === 'qr'
+	    ? "const qrcode = require('qrcode-terminal')"
+		: ""
+}
 const readline = require('readline')
 const handleCommand = require('./commands')
 
@@ -384,17 +422,25 @@ async function start() {
 		}
 	})
 
-${authMode === 'pairing' ? `	if (!state.creds.registered) {
+${
+	authMode === 'pairing'
+		? `	if (!state.creds.registered) {
 		const pn = await question('Enter your number without + or space\\n')
 		const code = await sock.requestPairingCode(pn.replace(/\\D/g, ''))
 		const formatted = code?.match(/.{1,4}/g)?.join('-') || code
 		console.log('Pairing code:', formatted)
 	}
-` : ''}	sock.ev.process(async events => {
+`
+		: ''
+}	sock.ev.process(async events => {
 		if (events['connection.update']) {
 			const { connection, lastDisconnect, qr } = events['connection.update']
-${authMode === 'qr' ? `			if (qr) qrcode.generate(qr, { small: true })
-` : ''}			if (connection === 'close') {
+${
+	authMode === 'qr'
+		? `			if (qr) qrcode.generate(qr, { small: true })
+`
+		: ''
+}			if (connection === 'close') {
 				const err = lastDisconnect?.error
 				const statusCode = err && err.output ? err.output.statusCode : undefined
 				const shouldReconnect = statusCode !== DisconnectReason.loggedOut
@@ -476,17 +522,25 @@ async function start() {
 		}
 	})
 
-${authMode === 'pairing' ? `	if (!state.creds.registered) {
+${
+	authMode === 'pairing'
+		? `	if (!state.creds.registered) {
 		const pn = await question('Enter your number without + or space\\n')
 		const code = await sock.requestPairingCode(pn.replace(/\\D/g, ''))
 		const formatted = code?.match(/.{1,4}/g)?.join('-') || code
 		console.log('Pairing code:', formatted)
 	}
-` : ''}	sock.ev.process(async events => {
+`
+		: ''
+}	sock.ev.process(async events => {
 		if (events['connection.update']) {
 			const { connection, lastDisconnect, qr } = events['connection.update']
-${authMode === 'qr' ? `			if (qr) qrcode.generate(qr, { small: true })
-` : ''}			if (connection === 'close') {
+${
+	authMode === 'qr'
+		? `			if (qr) qrcode.generate(qr, { small: true })
+`
+		: ''
+}			if (connection === 'close') {
 				const err = lastDisconnect?.error as Boom | undefined
 				const shouldReconnect = err?.output?.statusCode !== DisconnectReason.loggedOut
 				console.log('connection closed, reconnecting:', shouldReconnect)
@@ -761,8 +815,20 @@ const readmeFor = (a: Answers, dirName: string) => {
 		'## Setup',
 		'```bash',
 		detectPkgManager() === 'yarn' ? 'yarn' : `${detectPkgManager()} install`,
-		...(a.useTs ? [detectPkgManager() === 'npm' ? 'npm run build' : detectPkgManager() === 'yarn' ? 'yarn build' : `${detectPkgManager()} run build`] : []),
-		detectPkgManager() === 'npm' ? 'npm start' : detectPkgManager() === 'yarn' ? 'yarn start' : `${detectPkgManager()} start`,
+		...(a.useTs
+			? [
+					detectPkgManager() === 'npm'
+						? 'npm run build'
+						: detectPkgManager() === 'yarn'
+							? 'yarn build'
+							: `${detectPkgManager()} run build`
+				]
+			: []),
+		detectPkgManager() === 'npm'
+			? 'npm start'
+			: detectPkgManager() === 'yarn'
+				? 'yarn start'
+				: `${detectPkgManager()} start`,
 		'```'
 	].filter(Boolean)
 
@@ -794,10 +860,12 @@ const scaffoldFromTemplate = async (templatePath: string, dir: string, a: Answer
 	if (!existsSync(src) || !statSync(src).isDirectory()) {
 		throw new Error(`Template not found or not a directory: ${src}`)
 	}
+
 	if (dryRun) {
 		console.log(`[dry-run] copy template ${src} -> ${dir}`)
 		return
 	}
+
 	await cp(src, dir, { recursive: true, force: a.force })
 }
 
@@ -835,12 +903,14 @@ const scaffold = async (a: Answers) => {
 			if (!existsSync(dir)) {
 				await mkdir(dir, { recursive: true })
 			}
+
 			await scaffoldFromTemplate(a.template, dir, a, a.dryRun)
 			console.log(`\nCreated project "${dirName}" in ${dir} (from template)`)
 			console.log('Next steps:\n' + nextSteps(a, dirName))
 		} else {
 			console.log('\n[dry-run] no files written')
 		}
+
 		return
 	}
 
@@ -969,6 +1039,7 @@ const main = async () => {
 		await printVersion()
 		return
 	}
+
 	if (cmd === '--list-providers') {
 		await playWelcome(2)
 		printProviders()
@@ -987,9 +1058,11 @@ const main = async () => {
 			printHelp()
 			return
 		}
+
 		if (opts.unknown) {
 			throw new Error(`Unknown option: ${opts.unknown}`)
 		}
+
 		const answers = await resolveAnswers(opts, positionals)
 		await scaffold(answers)
 		return

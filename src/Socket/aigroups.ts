@@ -1,8 +1,8 @@
+import type { GroupMetadata, GroupParticipant, ParticipantAction } from '../Types'
+import { WAMessageAddressingMode } from '../Types'
+import { generateMessageIDV2 } from '../Utils'
 import type { BinaryNode } from '../WABinary'
 import { getBinaryNodeChild, getBinaryNodeChildren, jidEncode, jidNormalizedUser, S_WHATSAPP_NET } from '../WABinary'
-import { generateMessageIDV2 } from '../Utils'
-import { WAMessageAddressingMode } from '../Types'
-import type { GroupMetadata, GroupParticipant, ParticipantAction } from '../Types'
 import { makeGroupsSocket } from './groups'
 
 export type AIGroupMetadata = GroupMetadata & { isAIGroup: true }
@@ -46,22 +46,76 @@ export const extractAIGroupMetadata = (result: BinaryNode): AIGroupMetadata | un
 }
 
 export const makeAIGroupsSocket = <T extends ReturnType<typeof makeGroupsSocket>>(sock: T) => {
-	const aiGroupQuery = (jid: string, type: 'get' | 'set', content: BinaryNode[]) => sock.query({ tag: 'iq', attrs: { type, xmlns: 'w:g2', to: jid }, content })
-	const aiGroupMetadata = async (jid: string) => extractAIGroupMetadata(await aiGroupQuery(jid, 'get', [{ tag: 'interactive', attrs: { request: 'interactive' } }]))
+	const aiGroupQuery = (jid: string, type: 'get' | 'set', content: BinaryNode[]) =>
+		sock.query({ tag: 'iq', attrs: { type, xmlns: 'w:g2', to: jid }, content })
+	const aiGroupMetadata = async (jid: string) =>
+		extractAIGroupMetadata(await aiGroupQuery(jid, 'get', [{ tag: 'interactive', attrs: { request: 'interactive' } }]))
 	const aiGroupCreate = async (subject: string, participants: string[] = [], options: { key?: string } = {}) => {
-		const result = await aiGroupQuery(S_WHATSAPP_NET, 'set', [{ tag: 'create', attrs: { subject, key: options.key ?? generateMessageIDV2(sock.user?.id) }, content: participants.map(jid => ({ tag: 'participant', attrs: { jid } })) }])
+		const result = await aiGroupQuery(S_WHATSAPP_NET, 'set', [
+			{
+				tag: 'create',
+				attrs: { subject, key: options.key ?? generateMessageIDV2(sock.user?.id) },
+				content: participants.map(jid => ({ tag: 'participant', attrs: { jid } }))
+			}
+		])
 		return extractAIGroupMetadata(result)
 	}
-	const parseParticipants = (result: BinaryNode): Array<{ status: number; jid?: string; content?: BinaryNode['content'] }> => getBinaryNodeChildren(result, 'participant').map(node => ({ status: Number(node.attrs.error ?? node.attrs.code ?? 200), jid: node.attrs.jid, content: node.content }))
-	const aiGroupAddBot = (jid: string, botUser = '867051314767696') => aiGroupQuery(jid, 'set', [{ tag: 'add', attrs: {}, content: [{ tag: 'participant', attrs: { jid: `${botUser}@bot` } }] }]).then(parseParticipants)
-	const aiGroupLeave = (id: string) => aiGroupQuery(S_WHATSAPP_NET, 'set', [{ tag: 'leave', attrs: {}, content: [{ tag: 'group', attrs: { id } }] }]).then(() => undefined)
-	const aiGroupParticipantsUpdate = (jid: string, participants: string[], action: ParticipantAction) => aiGroupQuery(jid, 'set', [{ tag: action, attrs: {}, content: participants.map(participant => ({ tag: 'participant', attrs: { jid: participant } })) }]).then(parseParticipants)
-	const aiGroupUpdateSubject = (jid: string, subject: string) => aiGroupQuery(jid, 'set', [{ tag: 'subject', attrs: {}, content: Buffer.from(subject) }]).then(() => undefined)
-	const aiGroupInviteCode = async (jid: string) => getBinaryNodeChild(await aiGroupQuery(jid, 'get', [{ tag: 'invite', attrs: {} }]), 'invite')?.attrs.code
-	const aiGroupRevokeInvite = aiGroupInviteCode
-	const aiGroupAcceptInvite = async (code: string) => getBinaryNodeChild(await aiGroupQuery(S_WHATSAPP_NET, 'set', [{ tag: 'invite', attrs: { code } }]), 'group')?.attrs.jid
-	const aiGroupSettingUpdate = (jid: string, setting: string) => aiGroupQuery(jid, 'set', [{ tag: setting, attrs: {} }]).then(() => undefined)
-	const aiGroupToggleEphemeral = (jid: string, ephemeralExpiration: number) => aiGroupQuery(jid, 'set', ephemeralExpiration ? [{ tag: 'ephemeral', attrs: { expiration: String(ephemeralExpiration) } }] : [{ tag: 'not_ephemeral', attrs: {} }]).then(() => undefined)
 
-	return { ...sock, aiGroupMetadata, aiGroupCreate, aiGroupAddBot, aiGroupLeave, aiGroupParticipantsUpdate, aiGroupUpdateSubject, aiGroupInviteCode, aiGroupRevokeInvite, aiGroupAcceptInvite, aiGroupSettingUpdate, aiGroupToggleEphemeral }
+	const parseParticipants = (
+		result: BinaryNode
+	): Array<{ status: number; jid?: string; content?: BinaryNode['content'] }> =>
+		getBinaryNodeChildren(result, 'participant').map(node => ({
+			status: Number(node.attrs.error ?? node.attrs.code ?? 200),
+			jid: node.attrs.jid,
+			content: node.content
+		}))
+	const aiGroupAddBot = (jid: string, botUser = '867051314767696') =>
+		aiGroupQuery(jid, 'set', [
+			{ tag: 'add', attrs: {}, content: [{ tag: 'participant', attrs: { jid: `${botUser}@bot` } }] }
+		]).then(parseParticipants)
+	const aiGroupLeave = (id: string) =>
+		aiGroupQuery(S_WHATSAPP_NET, 'set', [{ tag: 'leave', attrs: {}, content: [{ tag: 'group', attrs: { id } }] }]).then(
+			() => undefined
+		)
+	const aiGroupParticipantsUpdate = (jid: string, participants: string[], action: ParticipantAction) =>
+		aiGroupQuery(jid, 'set', [
+			{
+				tag: action,
+				attrs: {},
+				content: participants.map(participant => ({ tag: 'participant', attrs: { jid: participant } }))
+			}
+		]).then(parseParticipants)
+	const aiGroupUpdateSubject = (jid: string, subject: string) =>
+		aiGroupQuery(jid, 'set', [{ tag: 'subject', attrs: {}, content: Buffer.from(subject) }]).then(() => undefined)
+	const aiGroupInviteCode = async (jid: string) =>
+		getBinaryNodeChild(await aiGroupQuery(jid, 'get', [{ tag: 'invite', attrs: {} }]), 'invite')?.attrs.code
+	const aiGroupRevokeInvite = aiGroupInviteCode
+	const aiGroupAcceptInvite = async (code: string) =>
+		getBinaryNodeChild(await aiGroupQuery(S_WHATSAPP_NET, 'set', [{ tag: 'invite', attrs: { code } }]), 'group')?.attrs
+			.jid
+	const aiGroupSettingUpdate = (jid: string, setting: string) =>
+		aiGroupQuery(jid, 'set', [{ tag: setting, attrs: {} }]).then(() => undefined)
+	const aiGroupToggleEphemeral = (jid: string, ephemeralExpiration: number) =>
+		aiGroupQuery(
+			jid,
+			'set',
+			ephemeralExpiration
+				? [{ tag: 'ephemeral', attrs: { expiration: String(ephemeralExpiration) } }]
+				: [{ tag: 'not_ephemeral', attrs: {} }]
+		).then(() => undefined)
+
+	return {
+		...sock,
+		aiGroupMetadata,
+		aiGroupCreate,
+		aiGroupAddBot,
+		aiGroupLeave,
+		aiGroupParticipantsUpdate,
+		aiGroupUpdateSubject,
+		aiGroupInviteCode,
+		aiGroupRevokeInvite,
+		aiGroupAcceptInvite,
+		aiGroupSettingUpdate,
+		aiGroupToggleEphemeral
+	}
 }

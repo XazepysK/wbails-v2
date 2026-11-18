@@ -111,6 +111,7 @@ describe('Stores Test Suite', () => {
 			it.skip('creates an in-memory SQLite store and binds events', () => {})
 			return
 		}
+
 		it('creates an in-memory SQLite store and binds events', async () => {
 			const store = makeSQLiteStore({ location: ':memory:' })
 			const ev = createMockEventEmitter()

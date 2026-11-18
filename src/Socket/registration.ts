@@ -1,5 +1,5 @@
-import { executeWMexQuery } from './mex'
 import type { BinaryNode } from '../WABinary'
+import { executeWMexQuery } from './mex'
 
 export const REGISTRATION_MEX_IDS = {
 	HAS_PASSWORD: '25379221318423478',
@@ -46,38 +46,131 @@ export const makeRegistrationSocket = <T extends MexSocket>(sock: T) => {
 
 	const hasPassword = () => mex({}, REGISTRATION_MEX_IDS.HAS_PASSWORD, 'xwa2_has_password')
 	const setPassword = (password: string, oldPassword?: string) =>
-		mex({ input: { password, ...(oldPassword ? { old_password: oldPassword } : {}) } }, REGISTRATION_MEX_IDS.SET_PASSWORD, 'xwa2_set_password')
-	const checkPassword = (password: string) => mex({ input: { password } }, REGISTRATION_MEX_IDS.CHECK_PASSWORD, 'xwa2_check_password')
-	const deletePassword = (password: string) => mex({ input: { password } }, REGISTRATION_MEX_IDS.DELETE_PASSWORD, 'xwa2_delete_password')
+		mex(
+			{ input: { password, ...(oldPassword ? { old_password: oldPassword } : {}) } },
+			REGISTRATION_MEX_IDS.SET_PASSWORD,
+			'xwa2_set_password'
+		)
+	const checkPassword = (password: string) =>
+		mex({ input: { password } }, REGISTRATION_MEX_IDS.CHECK_PASSWORD, 'xwa2_check_password')
+	const deletePassword = (password: string) =>
+		mex({ input: { password } }, REGISTRATION_MEX_IDS.DELETE_PASSWORD, 'xwa2_delete_password')
 	const passkeyExists = () => mex({}, REGISTRATION_MEX_IDS.PASSKEY_EXIST, 'xwa2_passkey_exist_response')
 	const passkeyListExists = () => mex({}, REGISTRATION_MEX_IDS.PASSKEY_LIST_EXIST, 'xwa2_passkey_list_exist_response')
-	const passkeyRequestChallenge = () => mex({}, REGISTRATION_MEX_IDS.PASSKEY_REQUEST_CHALLENGE, 'xwa2_passkey_request_challenge')
-	const passkeyVerifyChallenge = (credentialId: string, authenticatorData: string, clientDataJson: string, signature: string) =>
-		mex({ credential_id: credentialId, authenticator_data: authenticatorData, client_data_json: clientDataJson, signature }, REGISTRATION_MEX_IDS.PASSKEY_VERIFY_CHALLENGE, 'xwa2_passkey_verify_challenge')
-	const passkeyDelete = (credentialId: string) => mex({ credential_id: credentialId }, REGISTRATION_MEX_IDS.PASSKEY_DELETE, 'xwa2_passkey_delete')
+	const passkeyRequestChallenge = () =>
+		mex({}, REGISTRATION_MEX_IDS.PASSKEY_REQUEST_CHALLENGE, 'xwa2_passkey_request_challenge')
+	const passkeyVerifyChallenge = (
+		credentialId: string,
+		authenticatorData: string,
+		clientDataJson: string,
+		signature: string
+	) =>
+		mex(
+			{
+				credential_id: credentialId,
+				authenticator_data: authenticatorData,
+				client_data_json: clientDataJson,
+				signature
+			},
+			REGISTRATION_MEX_IDS.PASSKEY_VERIFY_CHALLENGE,
+			'xwa2_passkey_verify_challenge'
+		)
+	const passkeyDelete = (credentialId: string) =>
+		mex({ credential_id: credentialId }, REGISTRATION_MEX_IDS.PASSKEY_DELETE, 'xwa2_passkey_delete')
 	const regPasskeyStart = () => mex({}, REGISTRATION_MEX_IDS.REG_PASSKEY_START, 'xwa2_reg_passkey_start_register')
 	const regPasskeyFinish = (credentialId: string, attestationObject: string, clientDataJson: string) =>
-		mex({ credential_id: credentialId, attestation_object: attestationObject, client_data_json: clientDataJson }, REGISTRATION_MEX_IDS.REG_PASSKEY_FINISH, 'xwa2_reg_passkey_finish_register')
+		mex(
+			{ credential_id: credentialId, attestation_object: attestationObject, client_data_json: clientDataJson },
+			REGISTRATION_MEX_IDS.REG_PASSKEY_FINISH,
+			'xwa2_reg_passkey_finish_register'
+		)
 	const regPasskeyEnable = () => mex({}, REGISTRATION_MEX_IDS.REG_PASSKEY_ENABLE, 'xwa2_reg_passkey_enable')
 	const regPasskeyDisable = () => mex({}, REGISTRATION_MEX_IDS.REG_PASSKEY_DISABLE, 'xwa2_reg_passkey_disable')
 	const regPasskeyClear = () => mex({}, REGISTRATION_MEX_IDS.REG_PASSKEY_CLEAR, 'xwa2_reg_passkey_clear')
-	const regPasskeyUpdateEncryptionStatus = (encryptionEnabled: boolean) => mex({ encryption_enabled: encryptionEnabled }, REGISTRATION_MEX_IDS.REG_PASSKEY_UPDATE_ENCRYPTION_STATUS, 'xwa2_reg_passkey_update_client_encryption_status')
-	const getRegistrationUpsells = () => mex({}, REGISTRATION_MEX_IDS.GET_REGISTRATION_UPSELLS, 'xwa2_dynamic_reg_upsells')
-	const getDynamicRegistrationUpsells = () => mex({}, REGISTRATION_MEX_IDS.GET_DYNAMIC_REGISTRATION_UPSELLS, 'xwa2_dynamic_reg_upsells')
-	const registrationUpsellShown = (upsellId: string) => mex({ upsell_id: upsellId }, REGISTRATION_MEX_IDS.REGISTRATION_UPSELL_SHOWN, 'xwa2_reg_dynamic_upsell_shown')
-	const registrationDynamicUpsellShown = (upsellId: string) => mex({ upsell_id: upsellId }, REGISTRATION_MEX_IDS.REGISTRATION_DYNAMIC_UPSELL_SHOWN, 'xwa2_reg_dynamic_upsell_shown')
-	const regAccountTransferVerifyToken = (token: string) => mex({ token }, REGISTRATION_MEX_IDS.REG_ACCOUNT_TRANSFER_VERIFY_TOKEN, 'xwa2_reg_account_transfer_verify_token')
+	const regPasskeyUpdateEncryptionStatus = (encryptionEnabled: boolean) =>
+		mex(
+			{ encryption_enabled: encryptionEnabled },
+			REGISTRATION_MEX_IDS.REG_PASSKEY_UPDATE_ENCRYPTION_STATUS,
+			'xwa2_reg_passkey_update_client_encryption_status'
+		)
+	const getRegistrationUpsells = () =>
+		mex({}, REGISTRATION_MEX_IDS.GET_REGISTRATION_UPSELLS, 'xwa2_dynamic_reg_upsells')
+	const getDynamicRegistrationUpsells = () =>
+		mex({}, REGISTRATION_MEX_IDS.GET_DYNAMIC_REGISTRATION_UPSELLS, 'xwa2_dynamic_reg_upsells')
+	const registrationUpsellShown = (upsellId: string) =>
+		mex({ upsell_id: upsellId }, REGISTRATION_MEX_IDS.REGISTRATION_UPSELL_SHOWN, 'xwa2_reg_dynamic_upsell_shown')
+	const registrationDynamicUpsellShown = (upsellId: string) =>
+		mex(
+			{ upsell_id: upsellId },
+			REGISTRATION_MEX_IDS.REGISTRATION_DYNAMIC_UPSELL_SHOWN,
+			'xwa2_reg_dynamic_upsell_shown'
+		)
+	const regAccountTransferVerifyToken = (token: string) =>
+		mex({ token }, REGISTRATION_MEX_IDS.REG_ACCOUNT_TRANSFER_VERIFY_TOKEN, 'xwa2_reg_account_transfer_verify_token')
 	const userCountryCodeGet = () => mex({}, REGISTRATION_MEX_IDS.USER_COUNTRY_CODE, 'xwa2_user_country_code')
-	const suggestedContactsV2 = (limit = 20) => mex({ limit }, REGISTRATION_MEX_IDS.SUGGESTED_CONTACTS_V2, 'xwa2_suggested_contacts_v2')
+	const suggestedContactsV2 = (limit = 20) =>
+		mex({ limit }, REGISTRATION_MEX_IDS.SUGGESTED_CONTACTS_V2, 'xwa2_suggested_contacts_v2')
 	const ageCollection = () => mex({}, REGISTRATION_MEX_IDS.AGE_COLLECTION, 'xwa2_age_collection')
 	const getAgeExperience = () => mex({}, REGISTRATION_MEX_IDS.GET_AGE_EXPERIENCE, 'xwa2_get_age_experience')
-	const setAgeExperience = (birthYear: number, country?: string) => mex({ input: { birth_year: birthYear, ...(country ? { country } : {}) } }, REGISTRATION_MEX_IDS.SET_AGE_EXPERIENCE, 'xwa2_set_age_experience')
-	const submitAge = (birthYear: number, country?: string) => mex({ input: { birth_year: birthYear, ...(country ? { country } : {}) } }, REGISTRATION_MEX_IDS.SUBMIT_AGE, 'xwa2_submit_age')
-	const getImagineMeOnboarded = () => mex({}, REGISTRATION_MEX_IDS.GET_IMAGINE_ME_ONBOARDED, 'xwa2_get_imagine_me_onboarded')
-	const deleteImagineMeOnboarding = () => mex({}, REGISTRATION_MEX_IDS.DELETE_IMAGINE_ME_ONBOARDING, 'xwa2_delete_imagine_me_onboarding')
-	const fetchUserNoticesById = (noticeIds: string[]) => mex({ notice_ids: noticeIds }, REGISTRATION_MEX_IDS.FETCH_USER_NOTICES, 'xwa2_fetch_user_notices_by_id')
-	const createEnforcementAppeal = (reason: string, details?: string) => mex({ input: { reason, ...(details ? { details } : {}) } }, REGISTRATION_MEX_IDS.CREATE_ENFORCEMENT_APPEAL, 'xwa2_create_enforcement_appeal')
+	const setAgeExperience = (birthYear: number, country?: string) =>
+		mex(
+			{ input: { birth_year: birthYear, ...(country ? { country } : {}) } },
+			REGISTRATION_MEX_IDS.SET_AGE_EXPERIENCE,
+			'xwa2_set_age_experience'
+		)
+	const submitAge = (birthYear: number, country?: string) =>
+		mex(
+			{ input: { birth_year: birthYear, ...(country ? { country } : {}) } },
+			REGISTRATION_MEX_IDS.SUBMIT_AGE,
+			'xwa2_submit_age'
+		)
+	const getImagineMeOnboarded = () =>
+		mex({}, REGISTRATION_MEX_IDS.GET_IMAGINE_ME_ONBOARDED, 'xwa2_get_imagine_me_onboarded')
+	const deleteImagineMeOnboarding = () =>
+		mex({}, REGISTRATION_MEX_IDS.DELETE_IMAGINE_ME_ONBOARDING, 'xwa2_delete_imagine_me_onboarding')
+	const fetchUserNoticesById = (noticeIds: string[]) =>
+		mex({ notice_ids: noticeIds }, REGISTRATION_MEX_IDS.FETCH_USER_NOTICES, 'xwa2_fetch_user_notices_by_id')
+	const createEnforcementAppeal = (reason: string, details?: string) =>
+		mex(
+			{ input: { reason, ...(details ? { details } : {}) } },
+			REGISTRATION_MEX_IDS.CREATE_ENFORCEMENT_APPEAL,
+			'xwa2_create_enforcement_appeal'
+		)
 	const getWaMeLink = () => mex({}, REGISTRATION_MEX_IDS.GET_WA_ME_LINK, 'xwa2_get_wa_me_link')
 
-	return { ...sock, hasPassword, setPassword, checkPassword, deletePassword, passkeyExists, passkeyListExists, passkeyRequestChallenge, passkeyVerifyChallenge, passkeyDelete, regPasskeyStart, regPasskeyFinish, regPasskeyEnable, regPasskeyDisable, regPasskeyClear, regPasskeyUpdateEncryptionStatus, getRegistrationUpsells, getDynamicRegistrationUpsells, registrationUpsellShown, registrationDynamicUpsellShown, regAccountTransferVerifyToken, userCountryCodeGet, suggestedContactsV2, ageCollection, getAgeExperience, setAgeExperience, submitAge, getImagineMeOnboarded, deleteImagineMeOnboarding, fetchUserNoticesById, createEnforcementAppeal, getWaMeLink, REGISTRATION_MEX_IDS }
+	return {
+		...sock,
+		hasPassword,
+		setPassword,
+		checkPassword,
+		deletePassword,
+		passkeyExists,
+		passkeyListExists,
+		passkeyRequestChallenge,
+		passkeyVerifyChallenge,
+		passkeyDelete,
+		regPasskeyStart,
+		regPasskeyFinish,
+		regPasskeyEnable,
+		regPasskeyDisable,
+		regPasskeyClear,
+		regPasskeyUpdateEncryptionStatus,
+		getRegistrationUpsells,
+		getDynamicRegistrationUpsells,
+		registrationUpsellShown,
+		registrationDynamicUpsellShown,
+		regAccountTransferVerifyToken,
+		userCountryCodeGet,
+		suggestedContactsV2,
+		ageCollection,
+		getAgeExperience,
+		setAgeExperience,
+		submitAge,
+		getImagineMeOnboarded,
+		deleteImagineMeOnboarding,
+		fetchUserNoticesById,
+		createEnforcementAppeal,
+		getWaMeLink,
+		REGISTRATION_MEX_IDS
+	}
 }

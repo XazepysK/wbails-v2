@@ -20,7 +20,7 @@ const WAMO_APP_ID = '1015890928915437'
 const DEFAULT_TOKEN = `WA|${WAMO_APP_ID}|3201f239340c1c8ec6262a6dad04200e`
 
 const parseGraphQLResponse = (json: GraphQLResponse, dataPath?: string) => {
-	const errors = Array.isArray(json.errors) ? json.errors as GraphQLResponse[] : []
+	const errors = Array.isArray(json.errors) ? (json.errors as GraphQLResponse[]) : []
 	if (errors.length) {
 		const message = errors.map(error => String(error.message || 'Unknown error')).join(', ')
 		const first = errors[0]
@@ -63,7 +63,7 @@ export const executeWWWGraphQL = async (
 		throw new Boom(`GraphQL HTTP error ${response.status}`, { statusCode: response.status })
 	}
 
-	return parseGraphQLResponse(await response.json() as GraphQLResponse, dataPath)
+	return parseGraphQLResponse((await response.json()) as GraphQLResponse, dataPath)
 }
 
 export const executeFacebookGraphQL = (
@@ -99,13 +99,18 @@ export const executeWamoGraphQL = async (
 		throw new Boom(`Wamo GraphQL HTTP error ${response.status}`, { statusCode: response.status })
 	}
 
-	return parseGraphQLResponse(await response.json() as GraphQLResponse, dataPath)
+	return parseGraphQLResponse((await response.json()) as GraphQLResponse, dataPath)
 }
 
-export const makeGraphQLSocket = <T extends {
-	query: (node: BinaryNode) => Promise<BinaryNode>
-	generateMessageTag: () => string
-}>(sock: T, _config?: UserFacingSocketConfig): T & GraphQLSocket => ({
+export const makeGraphQLSocket = <
+	T extends {
+		query: (node: BinaryNode) => Promise<BinaryNode>
+		generateMessageTag: () => string
+	}
+>(
+	sock: T,
+	_config?: UserFacingSocketConfig
+): T & GraphQLSocket => ({
 	...sock,
 	executeWMexQuery: <R>(variables: GraphQLVariables, queryId: string, dataPath: string) =>
 		executeWMexQuery<R>(variables, queryId, dataPath, sock.query, sock.generateMessageTag),

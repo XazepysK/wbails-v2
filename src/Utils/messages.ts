@@ -1,5 +1,4 @@
 import { Boom } from '@hapi/boom'
-import { Sticker } from 'wa-sticker-formatter'
 import { randomBytes } from 'crypto'
 import { promises as fs } from 'fs'
 import { type Transform } from 'stream'
@@ -42,7 +41,6 @@ import {
 	type MediaDownloadOptions
 } from './messages-media'
 import { shouldIncludeReportingToken } from './reporting-utils'
-
 type ExtractByKey<T, K extends PropertyKey> = T extends Record<K, any> ? T : never
 type RequireKey<T, K extends keyof T> = T & {
 	[P in K]-?: Exclude<T[P], null | undefined>
@@ -309,7 +307,7 @@ export const prepareWAMessageMedia = async (
 			mediaKeyTimestamp: unixTimestampSeconds(),
 			...uploadData,
 			media: undefined
-		} as any)
+		})
 	})
 
 	if (uploadData.ptv) {
@@ -397,18 +395,40 @@ export const generateWAMessageContent = async (
 	message: AnyMessageContent,
 	options: MessageContentGenerationOptions
 ) => {
+	let was: any = null
+	let Sticker: any = null
+	try {
+		if (!was) {
+			was = await import('wa-sticker-formatter')
+			Sticker = was.Sticker || was.default || was
+		}
+	} catch {
+		Sticker = null
+	}
+
 	let m: WAMessageContent = {}
-		if (hasNonNullishProperty(message, 'interactiveButtons')) {
-			const interactive = message as Extract<AnyMessageContent, { interactiveButtons: unknown }>
-			m.interactiveMessage = { body: interactive.text ? { text: interactive.text } : undefined, header: interactive.header, footer: interactive.footer, bloksWidget: interactive.bloksWidget, nativeFlowMessage: { buttons: interactive.interactiveButtons, messageParamsJson: interactive.messageParamsJson, messageVersion: 1 }, carouselMessage: interactive.carousels ? { cards: interactive.carousels, messageVersion: 1 } : undefined }
-		} else if (hasNonNullishProperty(message, 'buttonsMessage')) {
-			m.buttonsMessage = message.buttonsMessage
-		} else if (hasNonNullishProperty(message, 'templateMessage')) {
-			m.templateMessage = message.templateMessage
-		} else if (hasNonNullishProperty(message, 'listMessage')) {
-			m.listMessage = message.listMessage
-		} else if (hasNonNullishProperty(message, 'text')) {
-			const extContent = { text: message.text } as WATextMessage
+	if (hasNonNullishProperty(message, 'interactiveButtons')) {
+		const interactive = message
+		m.interactiveMessage = {
+			body: interactive.text ? { text: interactive.text } : undefined,
+			header: interactive.header,
+			footer: interactive.footer,
+			bloksWidget: interactive.bloksWidget,
+			nativeFlowMessage: {
+				buttons: interactive.interactiveButtons,
+				messageParamsJson: interactive.messageParamsJson,
+				messageVersion: 1
+			},
+			carouselMessage: interactive.carousels ? { cards: interactive.carousels, messageVersion: 1 } : undefined
+		}
+	} else if (hasNonNullishProperty(message, 'buttonsMessage')) {
+		m.buttonsMessage = message.buttonsMessage
+	} else if (hasNonNullishProperty(message, 'templateMessage')) {
+		m.templateMessage = message.templateMessage
+	} else if (hasNonNullishProperty(message, 'listMessage')) {
+		m.listMessage = message.listMessage
+	} else if (hasNonNullishProperty(message, 'text')) {
+		const extContent = { text: message.text } as WATextMessage
 
 		let urlInfo = message.linkPreview
 		if (typeof urlInfo === 'undefined') {
@@ -602,14 +622,34 @@ export const generateWAMessageContent = async (
 			expectedVideoCount: message.album.expectedVideoCount
 		}
 	} else if (hasNonNullishProperty(message, 'stickerPackMessage')) {
-			const pack = message.stickerPackMessage
-			const stickers = await Promise.all(pack.stickers.map(async item => {
-				const sticker = new Sticker(item.sticker as string | Buffer, { pack: pack.name, author: pack.author ?? pack.publisher, id: pack.stickerPackId })
+		const pack = message.stickerPackMessage
+		const stickers = await Promise.all(
+			pack.stickers.map(async item => {
+				const sticker = new Sticker(item.sticker, {
+					pack: pack.name,
+					author: pack.author ?? pack.publisher,
+					id: pack.stickerPackId
+				})
 				const buffer = await sticker.build()
-				return { fileName: item.accessibilityLabel ?? 'sticker.webp', isAnimated: item.isAnimated ?? false, emojis: item.emojis ?? [], accessibilityLabel: item.accessibilityLabel, mimetype: 'image/webp', fileLength: buffer.length }
-			}))
-			m.stickerPackMessage = WAProto.Message.StickerPackMessage.create({ stickerPackId: pack.stickerPackId, name: pack.name, publisher: pack.publisher ?? pack.author, packDescription: pack.packDescription, caption: pack.caption, stickers })
-		} else if (hasNonNullishProperty(message, 'sharePhoneNumber')) {
+				return {
+					fileName: item.accessibilityLabel ?? 'sticker.webp',
+					isAnimated: item.isAnimated ?? false,
+					emojis: item.emojis ?? [],
+					accessibilityLabel: item.accessibilityLabel,
+					mimetype: 'image/webp',
+					fileLength: buffer.length
+				}
+			})
+		)
+		m.stickerPackMessage = WAProto.Message.StickerPackMessage.create({
+			stickerPackId: pack.stickerPackId,
+			name: pack.name,
+			publisher: pack.publisher ?? pack.author,
+			packDescription: pack.packDescription,
+			caption: pack.caption,
+			stickers
+		})
+	} else if (hasNonNullishProperty(message, 'sharePhoneNumber')) {
 		m.protocolMessage = {
 			type: proto.Message.ProtocolMessage.Type.SHARE_PHONE_NUMBER
 		}
@@ -626,12 +666,18 @@ export const generateWAMessageContent = async (
 			}
 		}
 	} else {
-		if (hasNonNullishProperty(message, 'sticker') && (typeof message.sticker === 'string' || Buffer.isBuffer(message.sticker))) {
-				const sticker = new Sticker(message.sticker, { author: message.author ?? message.publisher, pack: message.publisher })
-				m = await prepareWAMessageMedia({ ...message, sticker: await sticker.build() }, options)
-			} else {
-				m = await prepareWAMessageMedia(message, options)
-			}
+		if (
+			hasNonNullishProperty(message, 'sticker') &&
+			(typeof message.sticker === 'string' || Buffer.isBuffer(message.sticker))
+		) {
+			const sticker = new Sticker(message.sticker, {
+				author: message.author ?? message.publisher,
+				pack: message.publisher
+			})
+			m = await prepareWAMessageMedia({ ...message, sticker: await sticker.build() }, options)
+		} else {
+			m = await prepareWAMessageMedia(message, options)
+		}
 	}
 
 	if (hasOptionalProperty(message, 'viewOnce') && !!message.viewOnce) {

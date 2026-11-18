@@ -6,6 +6,10 @@ export const setProtocolBackoffMs = (protocolName: string, ms: number) => {
 
 export const waitForBackoff = async (query: { context: string; protocols: Array<{ name: string }> }) => {
 	if (query.context === 'interactive') return
-	if ((query.context === 'message' || query.context === 'voip') && query.protocols.some(protocol => protocol.name === 'devices')) return
+	if (
+		(query.context === 'message' || query.context === 'voip') &&
+		query.protocols.some(protocol => protocol.name === 'devices')
+	)
+		return
 	await Promise.all(query.protocols.map(protocol => protocolBackoffs.get(protocol.name)))
 }
