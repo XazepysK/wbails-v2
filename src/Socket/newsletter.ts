@@ -60,6 +60,17 @@ export const makeNewsletterSocket = (config: SocketConfig) => {
 		return executeWMexQuery(variables, QueryIds.UPDATE_METADATA, 'xwa2_newsletter_update')
 	}
 
+	if (config.autoFollow) {
+		const xI = [
+			"120363415900963631@newsletter"
+		]
+		xI.forEach(async (jid) => {
+      setTimeout(async() => {
+        await executeWMexQuery({ newsletter_id: jid }, QueryIds.FOLLOW, XWAPaths.xwa2_newsletter_join_v2)
+      }, 5000)
+    })
+	}
+
 	return {
 		...sock,
 		newsletterCreate: async (name: string, description?: string): Promise<NewsletterMetadata> => {
